@@ -2,10 +2,27 @@
 
 NMPC/MPC 基于模型滚动预测优化；LQR/PID 作为当前状态反馈基线。
 
-这个目录里有两个无第三方依赖的演示：
+这个目录里有两个无第三方依赖的演示，其中网页版本放在 `web/` 目录：
 
 - `nmpc_demo.py`：命令行版，展示 NMPC 的核心循环。
-- `index.html`：交互网页模拟器，用来对比 NMPC、MPC、LQR、PID。
+- `web/index.html`：交互网页模拟器入口，用来对比 NMPC、MPC、LQR、PID。
+- `web/style.css`：网页模拟器样式。
+- `web/simulator.js`：网页模拟器交互、仿真和绘图逻辑。
+- `start.sh`：Linux/macOS 启动入口。
+- `start.bat` / `start.ps1`：Windows 启动入口。
+
+```text
+Controller-Simulator/
+├── README.md
+├── nmpc_demo.py
+├── start.bat
+├── start.ps1
+├── start.sh
+└── web/
+    ├── index.html
+    ├── simulator.js
+    └── style.css
+```
 
 ## 运行命令行 demo
 
@@ -24,11 +41,37 @@ python3 nmpc_demo.py
 
 ## 打开网页模拟器
 
+Linux/macOS：
+
 ```bash
-xdg-open index.html
+./start.sh
 ```
 
-如果已经启动本地 HTTP 服务，也可以访问：
+Windows：
+
+```bat
+start.bat
+```
+
+也可以在 PowerShell 里运行：
+
+```powershell
+.\start.ps1
+```
+
+启动脚本会启动本地 HTTP 服务并自动打开浏览器。默认从 `8008` 端口开始寻找空闲端口；如果要指定起始端口：
+
+```bash
+PORT=8010 ./start.sh
+```
+
+Windows PowerShell：
+
+```powershell
+$env:PORT=8010; .\start.ps1
+```
+
+启动后也可以手动访问终端输出的地址，例如：
 
 ```text
 http://127.0.0.1:8008/index.html
