@@ -120,7 +120,7 @@ Object.assign(I18N.ru, I18N.en, {
   readError: "Чтение ошибки", accumulatedError: "накопленная ошибка", combineU: "Сумма u", clamp: "Ограничение", outputControl: "Выход", applyToPlant: "к объекту", positionError: "Ошибка позиции", stateFeedback: "обратная связь состояния"
 });
 
-let currentLang = "zh-CN";
+let currentLang = "en";
 
 function t(key) {
   return (I18N[currentLang] && I18N[currentLang][key]) || I18N["zh-CN"][key] || key;
@@ -229,7 +229,7 @@ function initialLanguage() {
   } catch (_) {
     // Fall back to Simplified Chinese.
   }
-  return "zh-CN";
+  return "en";
 }
 
 function openInfoModal() {

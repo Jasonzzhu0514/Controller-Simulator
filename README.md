@@ -1,19 +1,20 @@
 # Controller Simulator
 
-NMPC/MPC 基于模型滚动预测优化；LQR/PID 作为当前状态反馈基线。
+NMPC/MPC use model-based receding-horizon optimization; LQR/PID are feedback-control baselines that react to the current state.
 
-这个目录里有两个无第三方依赖的演示，其中网页版本放在 `web/` 目录：
+This repository contains two dependency-free demos. The web simulator lives in `web/`:
 
-- `nmpc_demo.py`：命令行版，展示 NMPC 的核心循环。
-- `web/index.html`：交互网页模拟器入口，用来对比 NMPC、MPC、LQR、PID。
-- `web/style.css`：网页模拟器样式。
-- `web/simulator.js`：网页模拟器交互、仿真和绘图逻辑。
-- `start.sh`：Linux/macOS 启动入口。
-- `start.bat` / `start.ps1`：Windows 启动入口。
+- `nmpc_demo.py`: command-line demo showing the core NMPC loop.
+- `web/index.html`: web simulator entry point for comparing NMPC, MPC, LQR, and PID.
+- `web/style.css`: web simulator styles.
+- `web/simulator.js`: web simulator interaction, simulation, and drawing logic.
+- `start.sh`: Linux/macOS launcher.
+- `start.bat` / `start.ps1`: Windows launchers.
 
 ```text
 Controller-Simulator/
 ├── README.md
+├── README.zh-CN.md
 ├── nmpc_demo.py
 ├── start.bat
 ├── start.ps1
@@ -24,150 +25,156 @@ Controller-Simulator/
     └── style.css
 ```
 
-## 运行命令行 demo
+## Run the Command-Line Demo
 
 ```bash
 python3 nmpc_demo.py
 ```
 
-命令行 demo 展示：
+The command-line demo shows:
 
-1. 读取当前状态。
-2. 枚举未来控制序列。
-3. 用模型预测未来。
-4. 给每条候选轨迹计算 cost。
-5. 只执行最优序列的第一步。
-6. 下一步重新计算。
+1. Read the current state.
+2. Enumerate future control sequences.
+3. Predict the future with a model.
+4. Score each candidate trajectory with a cost function.
+5. Apply only the first input from the best sequence.
+6. Recompute on the next step.
 
-## 打开网页模拟器
+## Open the Web Simulator
 
-Linux/macOS：
+Linux/macOS:
 
 ```bash
 ./start.sh
 ```
 
-Windows：
+Windows:
 
 ```bat
 start.bat
 ```
 
-也可以在 PowerShell 里运行：
+PowerShell:
 
 ```powershell
 .\start.ps1
 ```
 
-启动脚本会启动本地 HTTP 服务并自动打开浏览器。默认从 `8008` 端口开始寻找空闲端口；如果要指定起始端口：
+The launcher starts a local HTTP server and opens the simulator in your default browser. It starts looking for a free port from `8008`. To choose a different starting port:
 
 ```bash
 PORT=8010 ./start.sh
 ```
 
-Windows PowerShell：
+Windows PowerShell:
 
 ```powershell
 $env:PORT=8010; .\start.ps1
 ```
 
-启动后也可以手动访问终端输出的地址，例如：
+You can also open the printed URL manually, for example:
 
 ```text
 http://127.0.0.1:8008/index.html
 ```
 
-网页里有四种模式：
+## Controllers
 
-- `NMPC`：用非线性阻力模型预测未来。
-- `MPC`：用线性模型预测未来。
-- `LQR`：线性二次型调节器风格的状态反馈。
-- `PID`：普通 P/I/D 反馈控制基线。
+The web simulator includes four modes:
 
-页面右上角提供 `说明` 弹窗和语言切换，默认简体中文，可切换英文、繁体中文、日语和俄语。
+- `NMPC`: predicts the future with a nonlinear drag model.
+- `MPC`: predicts the future with a linear model.
+- `LQR`: linear-quadratic-regulator style state feedback.
+- `PID`: standard proportional, integral, and derivative feedback.
 
-三种模式控制的是同一个真实非线性对象：
+The top-right controls include an info dialog and language switcher. The interface defaults to English and can switch to Simplified Chinese, Traditional Chinese, Japanese, and Russian.
+
+All controllers drive the same nonlinear plant:
 
 ```text
 x_dot = v
 v_dot = u - drag * v * |v|
 ```
 
-因此可以直观看到：
+This makes the differences visible:
 
-- NMPC 的预测模型更接近真实对象。
-- MPC 仍然预测未来，但线性模型忽略阻力。
-- LQR 不预测约束，只按位置误差和速度做线性状态反馈。
-- PID 不预测未来，只根据当前误差、积分误差和速度反馈。
-- 在限速区场景里，MPC/NMPC 会提前把未来超速计入 cost；PID 只能到当前状态变化后再反应。
-- NMPC/MPC 接近目标后会进入终端捕获/保持逻辑，避免粗离散控制档位在目标点附近来回周旋。
+- NMPC uses a prediction model closer to the real plant.
+- MPC still predicts the future, but its linear model ignores drag.
+- LQR does not predict constraints; it uses position error and velocity feedback.
+- PID does not predict ahead; it reacts to current error, accumulated error, and velocity feedback.
+- In the speed-limit-zone scenario, NMPC/MPC can account for future speeding in the cost. PID reacts only after the current state changes.
+- Near the target, NMPC/MPC use terminal capture and hold logic to avoid oscillating around the target with coarse discrete inputs.
 
-网页支持调节：
+## Adjustable Parameters
 
-场景参数：
+Scene parameters:
 
-- 目标位置
-- 真实阻力系数
-- 限速区起点
-- 限速区速度上限
-- 限速惩罚权重
+- Target position
+- Real drag coefficient
+- Speed-limit-zone start
+- Speed limit
+- Speed-limit penalty weight
 
-MPC/NMPC 参数：
+MPC/NMPC parameters:
 
-- 预测步数 horizon
-- 控制候选档位
-- 位置误差权重
-- 终端误差权重
-- 速度惩罚权重
-- 控制平滑权重
-- 控制分段数
-- 控制能量权重
-- 终端速度倍率
-- 终端位置/速度增强
-- 收敛半径和收敛速度权重
-- 目标保持阈值
-- 目标捕获范围、捕获增益和捕获限幅
+- Prediction horizon
+- Control levels
+- Position-error weight
+- Terminal-error weight
+- Velocity penalty weight
+- Control smoothing weight
+- Control block count
+- Control effort weight
+- Terminal velocity multiplier
+- Terminal position and velocity boosts
+- Settling radius and settling velocity weight
+- Target hold thresholds
+- Target capture range, gains, and limit
 
-PID 参数：
+PID parameters:
 
-- 比例增益 Kp
-- 积分增益 Ki
-- 微分增益 Kd
-- 积分限幅
+- Proportional gain `Kp`
+- Integral gain `Ki`
+- Derivative gain `Kd`
+- Integral limit
 
-LQR 参数：
+LQR parameters:
 
-- 位置反馈 Kx
-- 速度反馈 Kv
+- Position feedback `Kx`
+- Velocity feedback `Kv`
 
-按钮说明：
+Buttons:
 
-- 左上角 `重置`：只重置小车状态和曲线。
-- 右侧 `重置参数`：按当前控制器恢复对应默认参数。
-- 右侧 `重置全部`：同时恢复参数并重置小车状态。
+- Top-left `Reset`: resets only the car state and curves.
+- Right-side `Reset Params`: restores defaults for the current controller.
+- Right-side `Reset All`: restores parameters and resets the car state.
 
-当前默认预设：
+Current default presets:
 
-- NMPC：horizon 28，候选档位 7，位置权重 1.2，终端权重 13，速度权重 0.34，平滑权重 0.34。
-- MPC：horizon 32，候选档位 7，位置权重 0.9，终端权重 16，速度权重 0.58，平滑权重 0.42。
+- NMPC: horizon 28, control levels 7, position weight 1.2, terminal weight 13, velocity weight 0.34, smoothing weight 0.34.
+- MPC: horizon 32, control levels 7, position weight 0.9, terminal weight 16, velocity weight 0.58, smoothing weight 0.42.
 
-页面布局已按桌面视口压缩，目标是不出现页面滚动条；如果浏览器窗口很矮，建议全屏查看。
+## Display Notes
 
-顶部工具栏里的 `倍速` 支持慢放和快放：小于 1x 会隔帧执行仿真步，大于 1x 会每帧执行多个仿真步。
+The page is compressed for desktop viewports and aims to avoid page scrollbars. If the browser window is very short, full-screen mode is recommended.
 
-曲线图使用自适应坐标轴：
+The `Speed` control supports slow motion and fast-forward: below `1x`, simulation steps are skipped across frames; above `1x`, multiple simulation steps run per frame.
 
-- y 轴会根据最近历史中的目标、位置、速度、控制量自动扩展范围。
-- y 轴显示动态数值刻度。
-- x 轴显示仿真时间 `t`，单位是秒。
-- 曲线从 `t = 0` 开始保留，右边界随当前仿真时间不断延伸；显示时会抽样绘制长历史，数据本身不再按滑动窗口删除。
-- 当系统已经稳定在目标点附近时，曲线会继续记录 5 秒稳定尾段，然后停止追加新点；此后控制流也会停在最后状态，不再循环播放。
+The chart uses adaptive axes:
 
-页面底部还包含 `实时控制流` 可视化：
+- The y-axis expands based on recent target, position, velocity, and control values.
+- The y-axis shows dynamic numeric ticks.
+- The x-axis shows simulation time `t` in seconds.
+- History is kept from `t = 0`; the right edge grows with current simulation time. Long histories are sampled for drawing, but the data is not deleted as a sliding window.
+- After the system stabilizes near the target, the chart records another 5 seconds of stable tail data, then stops appending points. The control-flow panel also freezes at the last state.
 
-- NMPC/MPC：显示读取状态、生成候选、ForLoop 遍历、rollout、cost、best command、执行第一步。
-- PID：显示误差、P 项、I 项、D 项、合成、限幅、输出。
-- LQR：显示状态误差、Kx 反馈、Kv 反馈、合成、限幅、输出。
-- 控制流现在使用蓝图式 SVG：白线表示执行顺序，绿线表示状态/候选数据，蓝线表示对象更新后的 `x,v` 反馈回下一帧输入。
+The bottom panel shows a live control-flow visualization:
 
-切换控制器时，控制流节点会自动切换；运行时会按实际计算状态高亮路径并显示关键数值，稳定冻结后不再循环播放。
+- NMPC/MPC: read state, generate candidates, ForLoop, rollout, cost, best command, execute first step.
+- PID: error, P term, I term, D term, combine, clamp, output.
+- LQR: state error, Kx feedback, Kv feedback, combine, clamp, output.
+- The blueprint-style SVG uses white links for execution order, green links for state/candidate data, and blue links for the updated plant state `x,v` feeding back into the next frame.
+
+When switching controllers, the control-flow nodes switch automatically. During simulation, the active path is highlighted and key values are shown. After the stable tail freezes, the flow no longer loops.
+
+[中文说明](README.zh-CN.md)
